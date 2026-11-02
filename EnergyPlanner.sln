@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37710.0 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnergyPlanner", "EnergyPlanner\EnergyPlanner.csproj", "{DAB99F0D-2921-4FD7-B9C8-210295FF2288}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DAB99F0D-2921-4FD7-B9C8-210295FF2288}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DAB99F0D-2921-4FD7-B9C8-210295FF2288}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DAB99F0D-2921-4FD7-B9C8-210295FF2288}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DAB99F0D-2921-4FD7-B9C8-210295FF2288}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {80510787-BAD5-4F39-98AC-E8F7BA15B7AD}
+	EndGlobalSection
+EndGlobal
