@@ -2,34 +2,60 @@
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    background-color: #f4f4f4;
+    background: white;
+    color: #222;
 }
 
 header {
-    background-color: #263b50;
+    background: #1565c0;
     color: white;
     padding: 20px;
 }
 
-h1 {
-    margin-top: 0;
-}
-
-nav {
+nav,
+.auth-buttons {
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
+}
+
+.auth-buttons {
+    margin-top: 10px;
 }
 
 button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
+    background: white;
+    color: #1565c0;
+    border: 1px solid #1565c0;
+    padding: 8px 14px;
     cursor: pointer;
 }
 
+    button:hover,
+    .nav-button.active {
+        background: #1565c0;
+        color: white;
+    }
+
 main {
-    margin: 30px;
+    max-width: 900px;
+    margin: 30px auto;
     padding: 20px;
-    background-color: white;
-    border-radius: 5px;
+}
+
+form {
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+input {
+    padding: 8px;
+    border: 1px solid #1565c0;
+}
+
+form button {
+    background: #1565c0;
+    color: white;
 }
