@@ -1,0 +1,35 @@
+﻿
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background-color: #f4f4f4;
+}
+
+header {
+    background-color: #263b50;
+    color: white;
+    padding: 20px;
+}
+
+h1 {
+    margin-top: 0;
+}
+
+nav {
+    display: flex;
+    gap: 10px;
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+main {
+    margin: 30px;
+    padding: 20px;
+    background-color: white;
+    border-radius: 5px;
+}

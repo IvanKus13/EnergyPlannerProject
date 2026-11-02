@@ -1,0 +1,49 @@
+﻿
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EnergyPlanner</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>EnergyPlanner</h1>
+
+        <nav>
+            <button onclick="showPage('info')">
+                Загальна інформація
+            </button>
+
+            <button onclick="showPage('calculation')">
+                Розрахунок
+            </button>
+        </nav>
+    </header>
+
+    <main>
+        <section id="info">
+            <h2>Загальна інформація</h2>
+
+            <p>
+                EnergyPlanner — це програмна система для
+                розрахунку та прогнозування енергоспоживання
+                побутових приладів.
+            </p>
+        </section>
+
+        <section id="calculation" hidden>
+            <h2>Розрахунок енергоспоживання</h2>
+
+            <p>
+                Тут буде розміщено калькулятор
+                енергоспоживання та акумулятора.
+            </p>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
