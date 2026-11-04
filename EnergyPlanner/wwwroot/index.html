@@ -1,5 +1,4 @@
-﻿
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
@@ -26,14 +25,18 @@
             </button>
         </nav>
 
-        <div class="auth-buttons">
+        <div class="auth-buttons" id="auth-buttons">
             <button data-page="login">Увійти</button>
             <button data-page="register">Реєстрація</button>
+        </div>
+
+        <div id="account-info" hidden>
+            <span>Добрий день, <span id="account-email"></span></span>
+            <button id="logout-button" type="button">Вийти</button>
         </div>
     </header>
 
     <main>
-
         <section id="info" class="page">
             <h2>Загальна інформація</h2>
 
@@ -69,14 +72,15 @@
         <section id="login" class="page" hidden>
             <h2>Вхід</h2>
 
-            <form>
+            <form id="login-form">
                 <label for="loginEmail">Електронна пошта</label>
-                <input type="email" id="loginEmail" required>
+                <input type="email" id="loginEmail" name="email" required>
 
                 <label for="loginPassword">Пароль</label>
-                <input type="password" id="loginPassword" required>
+                <input type="password" id="loginPassword" name="password" required>
 
                 <button type="submit">Увійти</button>
+                <p id="login-message"></p>
             </form>
         </section>
 
@@ -94,7 +98,6 @@
                 <p id="register-message"></p>
             </form>
         </section>
-
     </main>
 
     <script src="script.js"></script>
