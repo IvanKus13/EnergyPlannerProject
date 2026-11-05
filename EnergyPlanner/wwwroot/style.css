@@ -60,16 +60,64 @@ form button {
     color: white;
 }
 
-#account-info {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: white;
+
+.planner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 24px;
 }
 
-    #account-info[hidden] {
-        display: none;
+.planner-column {
+    min-width: 0;
+    padding: 20px;
+    border: 1px solid #dce3ea;
+    border-radius: 16px;
+    background: #f8fafc;
+}
+
+    .planner-column h2 {
+        margin-top: 0;
     }
+
+.card-list {
+    display: grid;
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.device-card {
+    padding: 16px;
+    border: 1px solid #dce3ea;
+    border-radius: 12px;
+    background: white;
+}
+
+    .device-card h3 {
+        margin: 0 0 12px;
+    }
+
+    .device-card label {
+        display: block;
+        margin-top: 10px;
+        font-size: 14px;
+    }
+
+    .device-card input {
+        box-sizing: border-box;
+        width: 100%;
+        margin-top: 5px;
+        padding: 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+    }
+
+    .device-card button {
+        margin-top: 12px;
+    }
+
+@media (max-width: 700px) {
+    .planner {
+        grid-template-columns: 1fr;
+    }
+}

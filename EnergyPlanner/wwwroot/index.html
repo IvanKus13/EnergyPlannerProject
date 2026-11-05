@@ -12,22 +12,27 @@
         <h1>EnergyPlanner</h1>
 
         <nav>
-            <button class="nav-button active" data-page="info">
+            <button class="nav-button" data-page="info">
                 Загальна інформація
             </button>
 
-            <button class="nav-button" data-page="calculation">
+            <button class="nav-button auth-only" data-page="calculation" hidden>
                 Розрахунок
             </button>
 
-            <button class="nav-button" data-page="history">
+            <button class="nav-button auth-only" data-page="history" hidden>
                 Мої розрахунки
             </button>
         </nav>
 
         <div class="auth-buttons" id="auth-buttons">
-            <button data-page="login">Увійти</button>
-            <button data-page="register">Реєстрація</button>
+            <button class="nav-button" data-page="login" type="button">
+                Увійти
+            </button>
+
+            <button class="nav-button" data-page="register" type="button">
+                Реєстрація
+            </button>
         </div>
 
         <div id="account-info" hidden>
@@ -37,6 +42,7 @@
     </header>
 
     <main>
+        <!-- Загальна інформація доступна всім -->
         <section id="info" class="page">
             <h2>Загальна інформація</h2>
 
@@ -52,15 +58,39 @@
             </p>
         </section>
 
+        <!-- Сторінка розрахунку доступна лише авторизованим -->
         <section id="calculation" class="page" hidden>
             <h2>Розрахунок енергоспоживання</h2>
 
             <p>
-                Тут буде калькулятор для додавання побутових
-                приладів та розрахунку їхнього енергоспоживання.
+                Додавайте акумулятори та побутові прилади,
+                щоб розрахувати енергоспоживання.
             </p>
+
+            <section class="planner">
+                <div class="planner-column">
+                    <h2>Акумулятори</h2>
+
+                    <button type="button" id="add-battery">
+                        + Додати акумулятор
+                    </button>
+
+                    <div id="battery-list" class="card-list"></div>
+                </div>
+
+                <div class="planner-column">
+                    <h2>Пристрої</h2>
+
+                    <button type="button" id="add-device">
+                        + Додати пристрій
+                    </button>
+
+                    <div id="device-list" class="card-list"></div>
+                </div>
+            </section>
         </section>
 
+        <!-- Збережені розрахунки доступні лише авторизованим -->
         <section id="history" class="page" hidden>
             <h2>Мої розрахунки</h2>
 
@@ -69,30 +99,44 @@
             </p>
         </section>
 
+        <!-- Сторінка входу -->
         <section id="login" class="page" hidden>
             <h2>Вхід</h2>
 
             <form id="login-form">
                 <label for="loginEmail">Електронна пошта</label>
-                <input type="email" id="loginEmail" name="email" required>
+                <input type="email"
+                       id="loginEmail"
+                       name="email"
+                       required>
 
                 <label for="loginPassword">Пароль</label>
-                <input type="password" id="loginPassword" name="password" required>
+                <input type="password"
+                       id="loginPassword"
+                       name="password"
+                       required>
 
                 <button type="submit">Увійти</button>
                 <p id="login-message"></p>
             </form>
         </section>
 
+        <!-- Сторінка реєстрації -->
         <section id="register" class="page" hidden>
             <h2>Реєстрація</h2>
 
             <form id="register-form">
                 <label for="register-email">Електронна пошта</label>
-                <input id="register-email" name="email" type="email" required>
+                <input id="register-email"
+                       name="email"
+                       type="email"
+                       required>
 
                 <label for="register-password">Пароль</label>
-                <input id="register-password" name="password" type="password" required>
+                <input id="register-password"
+                       name="password"
+                       type="password"
+                       required>
 
                 <button type="submit">Зареєструватися</button>
                 <p id="register-message"></p>
