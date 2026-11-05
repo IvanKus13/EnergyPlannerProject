@@ -59,3 +59,17 @@ form button {
     background: #1565c0;
     color: white;
 }
+
+#account-info {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: white;
+}
+
+    #account-info[hidden] {
+        display: none;
+    }

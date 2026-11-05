@@ -1,5 +1,6 @@
 ﻿using EnergyPlanner.Data;
 using EnergyPlannerProject.Models;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,10 +36,49 @@ public class AuthController : ControllerBase
 
         return Ok("Користувач зареєстрован.");
     }
-}
 
-public class RegisterRequest
-{
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(LoginRequest request)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == request.Email);
+
+        if (user == null || user.PasswordHash != request.Password)
+        {
+            return Unauthorized("Неправильна пошта або пароль");
+        }
+
+        HttpContext.Session.SetString("UserEmail", user.Email);
+
+        return Ok(new { email = user.Email });
+    }
+
+    [HttpGet("me")]
+    public IActionResult Me()
+    {
+        var email = HttpContext.Session.GetString("UserEmail");
+
+        if (email == null)
+            return Unauthorized();
+
+        return Ok(new { email });
+    }
+
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        HttpContext.Session.Clear();
+        return Ok();
+    }
+
+    public class RegisterRequest
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+    public class LoginRequest
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
 }
