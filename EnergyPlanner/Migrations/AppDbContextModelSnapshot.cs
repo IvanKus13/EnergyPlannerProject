@@ -21,6 +21,34 @@ namespace EnergyPlanner.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("EnergyPlannerProject.Models.Accumulator", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("CapacityKilowattHours")
+                        .HasColumnType("float");
+
+                    b.Property<double>("EfficiencyPercent")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Accumulators");
+                });
+
             modelBuilder.Entity("EnergyPlannerProject.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -40,6 +68,17 @@ namespace EnergyPlanner.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("EnergyPlannerProject.Models.Accumulator", b =>
+                {
+                    b.HasOne("EnergyPlannerProject.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }
