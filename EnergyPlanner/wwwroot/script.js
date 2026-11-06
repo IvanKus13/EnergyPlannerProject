@@ -1,6 +1,5 @@
 ﻿console.log("script.js загружен");
 
-// Навигация между страницами
 const navigationButtons = document.querySelectorAll("[data-page]");
 const pages = document.querySelectorAll(".page");
 
@@ -28,7 +27,6 @@ navigationButtons.forEach(button => {
     });
 });
 
-// Элементы авторизации
 const registerForm = document.getElementById("register-form");
 const loginForm = document.getElementById("login-form");
 const authButtons = document.getElementById("auth-buttons");
@@ -37,7 +35,6 @@ const accountEmail = document.getElementById("account-email");
 const loginMessage = document.getElementById("login-message");
 const logoutButton = document.getElementById("logout-button");
 
-// Пункты навигации, которые видны только авторизованным пользователям
 const authOnlyItems = document.querySelectorAll(".auth-only");
 
 function setAuthNavigation(isAuthenticated) {
@@ -74,7 +71,6 @@ function hideAccount() {
     setAuthNavigation(false);
 }
 
-// При загрузке страницы проверяем, есть ли активная сессия
 async function checkSession() {
     try {
         const response = await fetch("/api/auth/me");
@@ -91,7 +87,6 @@ async function checkSession() {
     }
 }
 
-// Регистрация
 if (registerForm) {
     registerForm.addEventListener("submit", async event => {
         event.preventDefault();
@@ -120,7 +115,6 @@ if (registerForm) {
     });
 }
 
-// Вход
 if (loginForm) {
     loginForm.addEventListener("submit", async event => {
         event.preventDefault();
@@ -155,7 +149,6 @@ if (loginForm) {
     });
 }
 
-// Выход
 if (logoutButton) {
     logoutButton.addEventListener("click", async () => {
         try {
@@ -172,7 +165,6 @@ if (logoutButton) {
     });
 }
 
-// Карточки аккумуляторов и устройств
 const batteryList = document.getElementById("battery-list");
 const deviceList = document.getElementById("device-list");
 const addBatteryButton = document.getElementById("add-battery");
