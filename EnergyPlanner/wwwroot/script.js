@@ -26,7 +26,6 @@ navigationButtons.forEach(button => {
     });
 });
 
-// Регистрация
 const registerForm = document.getElementById("register-form");
 
 if (registerForm) {
@@ -53,7 +52,6 @@ if (registerForm) {
     });
 }
 
-// Отображение аккаунта
 const loginForm = document.getElementById("login-form");
 const authButtons = document.getElementById("auth-buttons");
 const accountInfo = document.getElementById("account-info");
@@ -66,7 +64,6 @@ function showAccount(email) {
     accountInfo.hidden = false;
 }
 
-// Вход
 if (loginForm) {
     loginForm.addEventListener("submit", async event => {
         event.preventDefault();
@@ -96,7 +93,6 @@ if (loginForm) {
     });
 }
 
-// Выход
 const logoutButton = document.getElementById("logout-button");
 
 if (logoutButton) {

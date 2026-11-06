@@ -7,6 +7,9 @@ public class Accumulator
     public int UserId { get; set; }
     public User? User { get; set; }
 
+    public int? SchemeId { get; set; }
+    public Scheme? Scheme { get; set; }
+
     public string Name { get; set; } = string.Empty;
 
     public double CapacityKilowattHours { get; set; }
