@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EnergyPlanner.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261106154557_AddSchemesAndDevices")]
+    [Migration("20261107101724_AddSchemesAndDevices")]
     partial class AddSchemesAndDevices
     {
         /// <inheritdoc />
@@ -91,7 +91,7 @@ namespace EnergyPlanner.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Device");
+                    b.ToTable("Devices");
                 });
 
             modelBuilder.Entity("EnergyPlannerProject.Models.Scheme", b =>
@@ -119,7 +119,7 @@ namespace EnergyPlanner.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Scheme");
+                    b.ToTable("Schemes");
                 });
 
             modelBuilder.Entity("EnergyPlannerProject.Models.User", b =>

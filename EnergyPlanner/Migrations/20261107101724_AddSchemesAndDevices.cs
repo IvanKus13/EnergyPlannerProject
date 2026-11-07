@@ -18,7 +18,7 @@ namespace EnergyPlanner.Migrations
                 nullable: true);
 
             migrationBuilder.CreateTable(
-                name: "Scheme",
+                name: "Schemes",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -30,9 +30,9 @@ namespace EnergyPlanner.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Scheme", x => x.Id);
+                    table.PrimaryKey("PK_Schemes", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Scheme_Users_UserId",
+                        name: "FK_Schemes_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -40,7 +40,7 @@ namespace EnergyPlanner.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Device",
+                name: "Devices",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -54,14 +54,14 @@ namespace EnergyPlanner.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Device", x => x.Id);
+                    table.PrimaryKey("PK_Devices", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Device_Scheme_SchemeId",
+                        name: "FK_Devices_Schemes_SchemeId",
                         column: x => x.SchemeId,
-                        principalTable: "Scheme",
+                        principalTable: "Schemes",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Device_Users_UserId",
+                        name: "FK_Devices_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -74,25 +74,25 @@ namespace EnergyPlanner.Migrations
                 column: "SchemeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Device_SchemeId",
-                table: "Device",
+                name: "IX_Devices_SchemeId",
+                table: "Devices",
                 column: "SchemeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Device_UserId",
-                table: "Device",
+                name: "IX_Devices_UserId",
+                table: "Devices",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Scheme_UserId",
-                table: "Scheme",
+                name: "IX_Schemes_UserId",
+                table: "Schemes",
                 column: "UserId");
 
             migrationBuilder.AddForeignKey(
-                name: "FK_Accumulators_Scheme_SchemeId",
+                name: "FK_Accumulators_Schemes_SchemeId",
                 table: "Accumulators",
                 column: "SchemeId",
-                principalTable: "Scheme",
+                principalTable: "Schemes",
                 principalColumn: "Id");
         }
 
@@ -100,14 +100,14 @@ namespace EnergyPlanner.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
-                name: "FK_Accumulators_Scheme_SchemeId",
+                name: "FK_Accumulators_Schemes_SchemeId",
                 table: "Accumulators");
 
             migrationBuilder.DropTable(
-                name: "Device");
+                name: "Devices");
 
             migrationBuilder.DropTable(
-                name: "Scheme");
+                name: "Schemes");
 
             migrationBuilder.DropIndex(
                 name: "IX_Accumulators_SchemeId",
