@@ -13,13 +13,15 @@ public class CreateSchemeDto
 public class CreateAccumulatorDto
 {
     public string Name { get; set; } = string.Empty;
-
     public double CapacityKilowattHours { get; set; }
+    public double EfficiencyPercent { get; set; }
+   
 }
 
 public class CreateDeviceDto
 {
     public string Name { get; set; } = string.Empty;
-
     public double PowerWatts { get; set; }
+    public int Quantity { get; set; }
+    public double HoursPerDay { get; set; }
 }

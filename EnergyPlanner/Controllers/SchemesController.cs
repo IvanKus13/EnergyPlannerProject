@@ -43,17 +43,24 @@ public class SchemesController : ControllerBase
             return BadRequest(new { message = "Додайте хоча б один пристрій." });
 
         if (request.Accumulators.Any(a =>
-            string.IsNullOrWhiteSpace(a.Name) ||
-            !double.IsFinite(a.CapacityKilowattHours) ||
-            a.CapacityKilowattHours <= 0))
+       string.IsNullOrWhiteSpace(a.Name) ||
+       !double.IsFinite(a.CapacityKilowattHours) ||
+       a.CapacityKilowattHours <= 0 ||
+       !double.IsFinite(a.EfficiencyPercent) ||
+       a.EfficiencyPercent <= 0 ||
+       a.EfficiencyPercent > 100))
         {
             return BadRequest(new { message = "Перевірте дані акумуляторів." });
         }
 
         if (request.Devices.Any(d =>
-            string.IsNullOrWhiteSpace(d.Name) ||
-            !double.IsFinite(d.PowerWatts) ||
-            d.PowerWatts <= 0))
+        string.IsNullOrWhiteSpace(d.Name) ||
+        !double.IsFinite(d.PowerWatts) ||
+        d.PowerWatts <= 0 ||
+        d.Quantity <= 0 ||
+        !double.IsFinite(d.HoursPerDay) ||
+        d.HoursPerDay <= 0 ||
+        d.HoursPerDay > 24))
         {
             return BadRequest(new { message = "Перевірте дані пристроїв." });
         }
@@ -82,8 +89,8 @@ public class SchemesController : ControllerBase
             {
                 Name = item.Name.Trim(),
                 PowerWatts = item.PowerWatts,
-                Quantity = 1,
-                HoursPerDay = 0,
+                Quantity = item.Quantity,
+                HoursPerDay = item.HoursPerDay,
                 UserId = user.Id
             });
         }
@@ -91,11 +98,13 @@ public class SchemesController : ControllerBase
         _context.Schemes.Add(scheme);
 
         await _context.SaveChangesAsync();
+        var calculationResult = CalculateScheme(scheme);
 
         return Ok(new
         {
             message = "Схему успішно збережено.",
-            schemeId = scheme.Id
+            schemeId = scheme.Id,
+             calculationResult = calculationResult
         });
     }
 
@@ -136,18 +145,25 @@ public class SchemesController : ControllerBase
                 {
                     id = a.Id,
                     name = a.Name,
-                    capacityKilowattHours = a.CapacityKilowattHours
+                    capacityKilowattHours = a.CapacityKilowattHours,
+                    efficiencyPercent = a.EfficiencyPercent
                 }),
 
                 devices = s.Devices.Select(d => new
                 {
                     id = d.Id,
                     name = d.Name,
-                    powerWatts = d.PowerWatts
+                    powerWatts = d.PowerWatts,
+                    quantity = d.Quantity,
+                    hoursPerDay = d.HoursPerDay
                 })
             })
             .ToListAsync();
 
         return Ok(schemes);
+    }
+    private string CalculateScheme(Scheme scheme)
+    {
+        return "Future calculations";
     }
 }

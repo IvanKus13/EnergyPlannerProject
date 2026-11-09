@@ -102,9 +102,6 @@ namespace EnergyPlanner.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -142,7 +139,7 @@ namespace EnergyPlanner.Migrations
 
             modelBuilder.Entity("EnergyPlannerProject.Models.Accumulator", b =>
                 {
-                    b.HasOne("EnergyPlannerProject.Models.Scheme", "Scheme")
+                    b.HasOne("EnergyPlannerProject.Models.Scheme", "Schemes")
                         .WithMany("Accumulators")
                         .HasForeignKey("SchemeId");
 
@@ -152,14 +149,14 @@ namespace EnergyPlanner.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Scheme");
+                    b.Navigation("Schemes");
 
                     b.Navigation("User");
                 });
 
             modelBuilder.Entity("EnergyPlannerProject.Models.Device", b =>
                 {
-                    b.HasOne("EnergyPlannerProject.Models.Scheme", "Scheme")
+                    b.HasOne("EnergyPlannerProject.Models.Scheme", "Schemes")
                         .WithMany("Devices")
                         .HasForeignKey("SchemeId");
 
@@ -169,7 +166,7 @@ namespace EnergyPlanner.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Scheme");
+                    b.Navigation("Schemes");
 
                     b.Navigation("User");
                 });
