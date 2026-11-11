@@ -1,4 +1,5 @@
-﻿const navigationButtons = document.querySelectorAll("[data-page]");
+﻿
+const navigationButtons = document.querySelectorAll("[data-page]");
 const pages = document.querySelectorAll(".page");
 
 const registerForm = document.getElementById("register-form");
@@ -24,20 +25,29 @@ const schemeNameInput = document.getElementById("scheme-name");
 const calculateContainer = document.getElementById("calculate-container");
 const saveAndCalculateButton = document.getElementById("save-and-calculate");
 
-const saveModal = document.getElementById("save-modal");
-const closeModalButton = document.getElementById("close-modal");
-const cancelSaveButton = document.getElementById("cancel-save");
-const confirmSaveButton = document.getElementById("confirm-save");
-
-const modalSchemeName = document.getElementById("modal-scheme-name");
-const modalBatteryCount = document.getElementById("modal-battery-count");
-const modalDeviceCount = document.getElementById("modal-device-count");
-
-const savedSchemesList = document.getElementById("saved-schemes-list");
 const historySchemesList = document.getElementById("history-schemes-list");
+
+const calculationsSection = document.getElementById("calculations-section");
+const calculationResult = document.getElementById("calculation-result");
 
 let batteries = JSON.parse(localStorage.getItem("planner-batteries") || "[]");
 let devices = JSON.parse(localStorage.getItem("planner-devices") || "[]");
+
+batteries = batteries.map(item => ({
+    id: item.id || crypto.randomUUID(),
+    name: item.name || "",
+    capacityKilowattHours: item.capacityKilowattHours ??
+        (item.value ? Number(item.value) / 1000 : ""),
+    efficiencyPercent: item.efficiencyPercent ?? 100
+}));
+
+devices = devices.map(item => ({
+    id: item.id || crypto.randomUUID(),
+    name: item.name || "",
+    powerWatts: item.powerWatts ?? item.value ?? "",
+    quantity: item.quantity ?? 1,
+    hoursPerDay: item.hoursPerDay ?? ""
+}));
 
 function openPage(pageId) {
     pages.forEach(page => {
@@ -102,10 +112,6 @@ function hideAccount() {
 
     setAuthNavigation(false);
 
-    if (savedSchemesList) {
-        savedSchemesList.replaceChildren();
-    }
-
     if (historySchemesList) {
         historySchemesList.replaceChildren();
     }
@@ -118,16 +124,7 @@ async function checkSession() {
         const response = await fetch("/api/auth/me");
 
         if (response.ok) {
-            const responseText = await response.text();
-
-            console.log("HTTP status:", response.status);
-            console.log("Ответ сервера:", responseText);
-
-            if (!response.ok) {
-                throw new Error(responseText);
-            }
-
-            alert("Схему успішно збережено!");
+            const result = await response.json();
 
             showAccount(result.email);
             await loadSchemes();
@@ -236,6 +233,36 @@ function updateCalculateButton() {
     }
 }
 
+function createInputField(labelText, value, type, options, onChange) {
+    const label = document.createElement("label");
+    label.textContent = labelText;
+
+    const input = document.createElement("input");
+    input.type = type;
+
+    if (type === "number") {
+        input.min = options.min ?? "0";
+        input.step = options.step ?? "any";
+
+        if (options.max !== undefined) {
+            input.max = options.max;
+        }
+    }
+
+    input.placeholder = options.placeholder || "";
+    input.value = value ?? "";
+    input.required = true;
+
+    input.addEventListener("input", () => {
+        onChange(input.value);
+        saveCards();
+    });
+
+    label.append(input);
+
+    return label;
+}
+
 function createCard(type, item) {
     const card = document.createElement("article");
     card.className = "device-card";
@@ -243,43 +270,77 @@ function createCard(type, item) {
     const title = document.createElement("h3");
     title.textContent = type === "battery" ? "Акумулятор" : "Пристрій";
 
-    const nameLabel = document.createElement("label");
-    nameLabel.textContent = "Назва";
-
-    const nameInput = document.createElement("input");
-    nameInput.type = "text";
-    nameInput.placeholder = type === "battery"
-        ? "Наприклад, LiFePO4"
-        : "Наприклад, холодильник";
-    nameInput.value = item.name || "";
-
-    const valueLabel = document.createElement("label");
-    valueLabel.textContent = type === "battery"
-        ? "Ємність (Вт·год)"
-        : "Потужність (Вт)";
-
-    const valueInput = document.createElement("input");
-    valueInput.type = "number";
-    valueInput.min = "0";
-    valueInput.step = "any";
-    valueInput.placeholder = type === "battery"
-        ? "Наприклад, 1200"
-        : "Наприклад, 150";
-    valueInput.value = item.value || "";
-
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
     deleteButton.textContent = "Видалити";
 
-    nameInput.addEventListener("input", () => {
-        item.name = nameInput.value;
-        saveCards();
-    });
+    const fields = [];
 
-    valueInput.addEventListener("input", () => {
-        item.value = valueInput.value;
-        saveCards();
-    });
+    if (type === "battery") {
+        fields.push(
+            createInputField(
+                "Назва",
+                item.name,
+                "text",
+                { placeholder: "Наприклад, LiFePO4" },
+                value => item.name = value
+            ),
+
+            createInputField(
+                "Ємність (кВт·год)",
+                item.capacityKilowattHours,
+                "number",
+                { placeholder: "Наприклад, 5", min: "0", step: "any" },
+                value => item.capacityKilowattHours = value
+            ),
+
+            createInputField(
+                "КПД (%)",
+                item.efficiencyPercent,
+                "number",
+                { placeholder: "Наприклад, 95", min: "0", max: "100" },
+                value => item.efficiencyPercent = value
+            )
+        );
+    } else {
+        fields.push(
+            createInputField(
+                "Назва",
+                item.name,
+                "text",
+                { placeholder: "Наприклад, холодильник" },
+                value => item.name = value
+            ),
+
+            createInputField(
+                "Потужність (Вт)",
+                item.powerWatts,
+                "number",
+                { placeholder: "Наприклад, 200", min: "0", step: "any" },
+                value => item.powerWatts = value
+            ),
+
+            createInputField(
+                "Кількість",
+                item.quantity,
+                "number",
+                { placeholder: "Наприклад, 1", min: "1", step: "1" },
+                value => item.quantity = value
+            ),
+
+            createInputField(
+                "Час роботи на добу (год)",
+                item.hoursPerDay,
+                "number",
+                {
+                    placeholder: "Введіть 1000 для безперервної роботи",
+                    min: "0",
+                    max: "1000"
+                },
+                value => item.hoursPerDay = value
+            )
+        );
+    }
 
     deleteButton.addEventListener("click", () => {
         const items = type === "battery" ? batteries : devices;
@@ -293,15 +354,7 @@ function createCard(type, item) {
         renderCards();
     });
 
-    nameLabel.append(nameInput);
-    valueLabel.append(valueInput);
-
-    card.append(
-        title,
-        nameLabel,
-        valueLabel,
-        deleteButton
-    );
+    card.append(title, ...fields, deleteButton);
 
     return card;
 }
@@ -331,7 +384,8 @@ if (addBatteryButton) {
         batteries.push({
             id: crypto.randomUUID(),
             name: "",
-            value: ""
+            capacityKilowattHours: "",
+            efficiencyPercent: 100
         });
 
         saveCards();
@@ -344,7 +398,9 @@ if (addDeviceButton) {
         devices.push({
             id: crypto.randomUUID(),
             name: "",
-            value: ""
+            powerWatts: "",
+            quantity: 1,
+            hoursPerDay: ""
         });
 
         saveCards();
@@ -355,11 +411,7 @@ if (addDeviceButton) {
 function validateScheme() {
     if (!schemeNameInput || !schemeNameInput.value.trim()) {
         alert("Введіть назву схеми!");
-
-        if (schemeNameInput) {
-            schemeNameInput.focus();
-        }
-
+        schemeNameInput?.focus();
         return false;
     }
 
@@ -368,62 +420,43 @@ function validateScheme() {
         return false;
     }
 
-    const allBatteriesFilled = batteries.every(item =>
-        item.name.trim() !== "" &&
-        item.value !== "" &&
-        Number.isFinite(Number(item.value)) &&
-        Number(item.value) > 0
-    );
+    const allBatteriesFilled = batteries.every(item => {
+        const capacity = Number(item.capacityKilowattHours);
+        const efficiency = Number(item.efficiencyPercent);
 
-    const allDevicesFilled = devices.every(item =>
-        item.name.trim() !== "" &&
-        item.value !== "" &&
-        Number.isFinite(Number(item.value)) &&
-        Number(item.value) > 0
-    );
+        return item.name.trim() !== "" &&
+            item.capacityKilowattHours !== "" &&
+            Number.isFinite(capacity) &&
+            capacity > 0 &&
+            item.efficiencyPercent !== "" &&
+            Number.isFinite(efficiency) &&
+            efficiency > 0 &&
+            efficiency <= 100;
+    });
+
+    const allDevicesFilled = devices.every(item => {
+        const power = Number(item.powerWatts);
+        const quantity = Number(item.quantity);
+        const hours = Number(item.hoursPerDay);
+
+        return item.name.trim() !== "" &&
+            item.powerWatts !== "" &&
+            Number.isFinite(power) &&
+            power > 0 &&
+            Number.isInteger(quantity) &&
+            quantity > 0 &&
+            item.hoursPerDay !== "" &&
+            Number.isFinite(hours) &&
+            hours > 0 &&
+            (hours <= 24 || hours === 1000);
+    });
 
     if (!allBatteriesFilled || !allDevicesFilled) {
-        alert("Заповніть усі поля акумуляторів та пристроїв!");
+        alert("Перевірте всі поля акумуляторів та пристроїв!");
         return false;
     }
 
     return true;
-}
-
-function openSaveModal() {
-    if (!validateScheme()) {
-        return;
-    }
-
-    modalSchemeName.textContent = schemeNameInput.value.trim();
-    modalBatteryCount.textContent = batteries.length;
-    modalDeviceCount.textContent = devices.length;
-
-    saveModal.hidden = false;
-}
-
-function closeSaveModal() {
-    saveModal.hidden = true;
-}
-
-if (saveAndCalculateButton) {
-    saveAndCalculateButton.addEventListener("click", openSaveModal);
-}
-
-if (closeModalButton) {
-    closeModalButton.addEventListener("click", closeSaveModal);
-}
-
-if (cancelSaveButton) {
-    cancelSaveButton.addEventListener("click", closeSaveModal);
-}
-
-if (saveModal) {
-    saveModal.addEventListener("click", event => {
-        if (event.target === saveModal) {
-            closeSaveModal();
-        }
-    });
 }
 
 function createSavedSchemeCard(scheme) {
@@ -434,20 +467,20 @@ function createSavedSchemeCard(scheme) {
     title.textContent = scheme.name;
 
     const date = document.createElement("p");
-    date.textContent = `Дата створення: ${new Date(scheme.createdAt).toLocaleString("uk-UA")}`;
+    date.textContent =
+        `Дата створення: ${new Date(scheme.createdAt).toLocaleString("uk-UA")}`;
 
     const accumulatorTitle = document.createElement("h4");
     accumulatorTitle.textContent = "Акумулятори";
 
     const accumulatorList = document.createElement("ul");
 
-    scheme.accumulators.forEach(accumulator => {
+    (scheme.accumulators || []).forEach(accumulator => {
         const item = document.createElement("li");
 
-        const capacityWh = accumulator.capacityKilowattHours * 1000;
-
         item.textContent =
-            `${accumulator.name} — ${capacityWh.toLocaleString("uk-UA")} Вт·год`;
+            `${accumulator.name} — ${accumulator.capacityKilowattHours} кВт·год, ` +
+            `КПД: ${accumulator.efficiencyPercent ?? "—"}%`;
 
         accumulatorList.append(item);
     });
@@ -457,11 +490,17 @@ function createSavedSchemeCard(scheme) {
 
     const deviceListElement = document.createElement("ul");
 
-    scheme.devices.forEach(device => {
+    (scheme.devices || []).forEach(device => {
         const item = document.createElement("li");
 
+        const workingTime = device.hoursPerDay === 1000
+            ? "Безперервно"
+            : `${device.hoursPerDay} год/добу`;
+
         item.textContent =
-            `${device.name} — ${device.powerWatts.toLocaleString("uk-UA")} Вт`;
+            `${device.name} — ${device.powerWatts} Вт, ` +
+            `Кількість: ${device.quantity ?? "—"}, ` +
+            `Час роботи: ${workingTime}`;
 
         deviceListElement.append(item);
     });
@@ -479,34 +518,21 @@ function createSavedSchemeCard(scheme) {
 }
 
 function renderSavedSchemes(schemes) {
-    if (savedSchemesList) {
-        savedSchemesList.replaceChildren();
-
-        if (schemes.length === 0) {
-            const message = document.createElement("p");
-            message.textContent = "У вас поки немає збережених схем.";
-
-            savedSchemesList.append(message);
-        } else {
-            schemes.forEach(scheme => {
-                savedSchemesList.append(createSavedSchemeCard(scheme));
-            });
-        }
+    if (!historySchemesList) {
+        return;
     }
 
-    if (historySchemesList) {
-        historySchemesList.replaceChildren();
+    historySchemesList.replaceChildren();
 
-        if (schemes.length === 0) {
-            const message = document.createElement("p");
-            message.textContent = "У вас поки немає збережених схем.";
+    if (schemes.length === 0) {
+        const message = document.createElement("p");
+        message.textContent = "У вас поки немає збережених схем.";
 
-            historySchemesList.append(message);
-        } else {
-            schemes.forEach(scheme => {
-                historySchemesList.append(createSavedSchemeCard(scheme));
-            });
-        }
+        historySchemesList.append(message);
+    } else {
+        schemes.forEach(scheme => {
+            historySchemesList.append(createSavedSchemeCard(scheme));
+        });
     }
 }
 
@@ -529,11 +555,6 @@ async function loadSchemes() {
     } catch (error) {
         console.error("Помилка завантаження схем:", error);
 
-        if (savedSchemesList) {
-            savedSchemesList.textContent =
-                "Не вдалося завантажити збережені схеми.";
-        }
-
         if (historySchemesList) {
             historySchemesList.textContent =
                 "Не вдалося завантажити збережені схеми.";
@@ -541,7 +562,44 @@ async function loadSchemes() {
     }
 }
 
+function displayCalculationResult(result) {
+    if (!calculationsSection || !calculationResult) {
+        return;
+    }
 
+    if (result.continuousMode) {
+        const totalMinutes = Math.floor(result.runtimeHours * 60);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+
+        calculationResult.textContent =
+            `При безперервній роботі всіх пристроїв акумуляторів вистачить на ${hours} год ${minutes} хв.`;
+    } else if (!result.fullDayAvailable) {
+        calculationResult.textContent =
+            `Акумуляторів не вистачить на повний добовий графік. ` +
+            `Вони зможуть забезпечити приблизно ${(result.runtimeDays * 100).toFixed(1)}% одного добового графіка.`;
+    } else {
+        let message =
+            `Схема успішно забезпечить заданий режим протягом першої доби. `;
+
+        if (result.additionalFullDays > 0) {
+            message +=
+                `Після цього акумуляторів вистачить ще на ${result.additionalFullDays} повних днів. `;
+        }
+
+        if (result.nextDayPercent > 0.01) {
+            message +=
+                `Після цього залишиться енергії ще на ${result.nextDayPercent.toFixed(1)}% наступного добового графіка.`;
+        } else {
+            message +=
+                `Після цього акумулятори будуть розряджені.`;
+        }
+
+        calculationResult.textContent = message;
+    }
+
+    calculationsSection.hidden = false;
+}
 
 if (saveAndCalculateButton) {
     saveAndCalculateButton.addEventListener("click", async () => {
@@ -554,12 +612,15 @@ if (saveAndCalculateButton) {
 
             accumulators: batteries.map(item => ({
                 name: item.name.trim(),
-                capacityKilowattHours: Number(item.value) / 1000
+                capacityKilowattHours: Number(item.capacityKilowattHours),
+                efficiencyPercent: Number(item.efficiencyPercent)
             })),
 
             devices: devices.map(item => ({
                 name: item.name.trim(),
-                powerWatts: Number(item.value)
+                powerWatts: Number(item.powerWatts),
+                quantity: Number(item.quantity),
+                hoursPerDay: Number(item.hoursPerDay)
             }))
         };
 
@@ -574,13 +635,29 @@ if (saveAndCalculateButton) {
                 body: JSON.stringify(scheme)
             });
 
-            const result = await response.json();
+            const responseText = await response.text();
+
+            let result = {};
+
+            try {
+                result = responseText ? JSON.parse(responseText) : {};
+            } catch {
+                result = { message: responseText };
+            }
 
             if (!response.ok) {
                 throw new Error(
                     result.message || "Не вдалося зберегти схему."
                 );
             }
+
+            if (!result.calculationResult) {
+                throw new Error(
+                    "Схему збережено, але сервер не повернув результат розрахунку."
+                );
+            }
+
+            displayCalculationResult(result.calculationResult);
 
             batteries = [];
             devices = [];
@@ -601,3 +678,5 @@ if (saveAndCalculateButton) {
     });
 }
 
+renderCards();
+checkSession();

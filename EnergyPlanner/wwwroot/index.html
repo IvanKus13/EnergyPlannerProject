@@ -48,8 +48,6 @@
 
     <main>
 
-        <!-- Головна сторінка -->
-
         <section id="info" class="page">
             <h2>Ласкаво просимо до EnergyPlanner!</h2>
 
@@ -67,9 +65,6 @@
                 Для початку роботи увійдіть у свій акаунт або зареєструйтеся.
             </p>
         </section>
-
-
-        <!-- Сторінка входу -->
 
         <section id="login" class="page" hidden>
             <h2>Вхід</h2>
@@ -95,9 +90,6 @@
             </form>
         </section>
 
-
-        <!-- Сторінка реєстрації -->
-
         <section id="register" class="page" hidden>
             <h2>Реєстрація</h2>
 
@@ -122,9 +114,6 @@
             </form>
         </section>
 
-
-        <!-- Планувальник -->
-
         <section id="calculation" class="page" hidden>
 
             <h2>Мій планувальник</h2>
@@ -143,9 +132,6 @@
                        placeholder="Наприклад, Резервне живлення будинку">
             </div>
 
-
-            <!-- Дві колонки: акумулятори та пристрої -->
-
             <div class="planner-container">
 
                 <div class="planner-column battery-column">
@@ -157,7 +143,6 @@
                         + Додати акумулятор
                     </button>
                 </div>
-
 
                 <div class="planner-column device-column">
                     <h2>Пристрої</h2>
@@ -171,30 +156,18 @@
 
             </div>
 
-
-            <!-- Кнопка прямого збереження -->
-
             <div id="calculate-container" class="calculate-container" hidden>
                 <button type="button" id="save-and-calculate">
                     Зберегти схему
                 </button>
             </div>
 
-
-            <!-- Збережені схеми -->
-
-            <section class="saved-schemes-section">
-                <h2>Збережені схеми</h2>
-
-                <div id="saved-schemes-list">
-                    <p>Завантаження схем...</p>
-                </div>
+            <section id="calculations-section" class="calculations-section" hidden>
+                <h2>Результати розрахунків</h2>
+                <p id="calculation-result"></p>
             </section>
 
         </section>
-
-
-        <!-- Історія схем -->
 
         <section id="history" class="page" hidden>
             <h2>Історія схем</h2>
