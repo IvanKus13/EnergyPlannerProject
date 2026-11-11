@@ -25,7 +25,6 @@ const schemeNameInput = document.getElementById("scheme-name");
 const calculateContainer = document.getElementById("calculate-container");
 const saveAndCalculateButton = document.getElementById("save-and-calculate");
 
-const savedSchemesList = document.getElementById("saved-schemes-list");
 const historySchemesList = document.getElementById("history-schemes-list");
 
 const calculationsSection = document.getElementById("calculations-section");
@@ -39,8 +38,7 @@ batteries = batteries.map(item => ({
     name: item.name || "",
     capacityKilowattHours: item.capacityKilowattHours ??
         (item.value ? Number(item.value) / 1000 : ""),
-    efficiencyPercent: item.efficiencyPercent ?? 100,
-    quantity: item.quantity ?? 1
+    efficiencyPercent: item.efficiencyPercent ?? 100
 }));
 
 devices = devices.map(item => ({
@@ -113,10 +111,6 @@ function hideAccount() {
     }
 
     setAuthNavigation(false);
-
-    if (savedSchemesList) {
-        savedSchemesList.replaceChildren();
-    }
 
     if (historySchemesList) {
         historySchemesList.replaceChildren();
@@ -306,9 +300,7 @@ function createCard(type, item) {
                 "number",
                 { placeholder: "Наприклад, 95", min: "0", max: "100" },
                 value => item.efficiencyPercent = value
-            ),
-
-            
+            )
         );
     } else {
         fields.push(
@@ -389,8 +381,7 @@ if (addBatteryButton) {
             id: crypto.randomUUID(),
             name: "",
             capacityKilowattHours: "",
-            efficiencyPercent: 100,
-            quantity: 1
+            efficiencyPercent: 100
         });
 
         saveCards();
@@ -428,7 +419,6 @@ function validateScheme() {
     const allBatteriesFilled = batteries.every(item => {
         const capacity = Number(item.capacityKilowattHours);
         const efficiency = Number(item.efficiencyPercent);
-        const quantity = Number(item.quantity);
 
         return item.name.trim() !== "" &&
             item.capacityKilowattHours !== "" &&
@@ -437,9 +427,7 @@ function validateScheme() {
             item.efficiencyPercent !== "" &&
             Number.isFinite(efficiency) &&
             efficiency > 0 &&
-            efficiency <= 100 &&
-            Number.isInteger(quantity) &&
-            quantity > 0;
+            efficiency <= 100;
     });
 
     const allDevicesFilled = devices.every(item => {
@@ -522,19 +510,21 @@ function createSavedSchemeCard(scheme) {
 }
 
 function renderSavedSchemes(schemes) {
-    if (historySchemesList) {
-        historySchemesList.replaceChildren();
+    if (!historySchemesList) {
+        return;
+    }
 
-        if (schemes.length === 0) {
-            const message = document.createElement("p");
-            message.textContent = "У вас поки немає збережених схем.";
+    historySchemesList.replaceChildren();
 
-            historySchemesList.append(message);
-        } else {
-            schemes.forEach(scheme => {
-                historySchemesList.append(createSavedSchemeCard(scheme));
-            });
-        }
+    if (schemes.length === 0) {
+        const message = document.createElement("p");
+        message.textContent = "У вас поки немає збережених схем.";
+
+        historySchemesList.append(message);
+    } else {
+        schemes.forEach(scheme => {
+            historySchemesList.append(createSavedSchemeCard(scheme));
+        });
     }
 }
 
@@ -557,16 +547,34 @@ async function loadSchemes() {
     } catch (error) {
         console.error("Помилка завантаження схем:", error);
 
-        if (savedSchemesList) {
-            savedSchemesList.textContent =
-                "Не вдалося завантажити збережені схеми.";
-        }
-
         if (historySchemesList) {
             historySchemesList.textContent =
                 "Не вдалося завантажити збережені схеми.";
         }
     }
+}
+
+function displayCalculationResult(result) {
+    if (!calculationsSection || !calculationResult) {
+        return;
+    }
+
+    const runtimeHours = Number(result.runtimeHours);
+    const totalPower = Number(result.totalPower);
+
+    if (!Number.isFinite(runtimeHours) || !Number.isFinite(totalPower)) {
+        throw new Error("Сервер повернув некоректні результати розрахунку.");
+    }
+
+    const totalMinutes = Math.round(runtimeHours * 60);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    calculationResult.textContent =
+        `Орієнтовний час роботи: ${hours} год ${minutes} хв. ` +
+        `Загальна потужність: ${totalPower} Вт.`;
+
+    calculationsSection.hidden = false;
 }
 
 if (saveAndCalculateButton) {
@@ -581,8 +589,7 @@ if (saveAndCalculateButton) {
             accumulators: batteries.map(item => ({
                 name: item.name.trim(),
                 capacityKilowattHours: Number(item.capacityKilowattHours),
-                efficiencyPercent: Number(item.efficiencyPercent),
-                quantity: Number(item.quantity)
+                efficiencyPercent: Number(item.efficiencyPercent)
             })),
 
             devices: devices.map(item => ({
@@ -619,8 +626,13 @@ if (saveAndCalculateButton) {
                     result.message || "Не вдалося зберегти схему."
                 );
             }
-            calculationsSection.hidden = false;
-            calculationResult.textContent = result.calculationResult;
+
+            if (!result.calculationResult) {
+                throw new Error("Схему збережено, але сервер не повернув результат розрахунку.");
+            }
+
+            displayCalculationResult(result.calculationResult);
+
             batteries = [];
             devices = [];
             schemeNameInput.value = "";

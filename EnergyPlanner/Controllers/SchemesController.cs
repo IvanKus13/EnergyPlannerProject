@@ -1,4 +1,5 @@
 ﻿using EnergyPlanner.Data;
+using EnergyPlanner.Services;
 using EnergyPlannerProject.DTO;
 using EnergyPlannerProject.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -11,10 +12,13 @@ namespace EnergyPlanner.Controllers;
 public class SchemesController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly EnergyCalculationService _calculationService;
 
-    public SchemesController(AppDbContext context)
+    
+    public SchemesController(AppDbContext context,EnergyCalculationService calculationService)
     {
         _context = context;
+        _calculationService = calculationService;
     }
 
 
@@ -78,7 +82,7 @@ public class SchemesController : ControllerBase
             {
                 Name = item.Name.Trim(),
                 CapacityKilowattHours = item.CapacityKilowattHours,
-                EfficiencyPercent = 100,
+                EfficiencyPercent = item.EfficiencyPercent,
                 UserId = user.Id
             });
         }
@@ -98,13 +102,24 @@ public class SchemesController : ControllerBase
         _context.Schemes.Add(scheme);
 
         await _context.SaveChangesAsync();
-        var calculationResult = CalculateScheme(scheme);
+
+        double runtimeHours = _calculationService.CalculateRuntime(
+            scheme.Accumulators,
+            scheme.Devices
+        );
+
+        double totalPower = scheme.Devices.Sum(d =>
+            d.PowerWatts * d.Quantity);
 
         return Ok(new
         {
             message = "Схему успішно збережено.",
             schemeId = scheme.Id,
-             calculationResult = calculationResult
+            calculationResult = new
+            {
+                runtimeHours,
+                totalPower
+            }
         });
     }
 
@@ -162,8 +177,5 @@ public class SchemesController : ControllerBase
 
         return Ok(schemes);
     }
-    private string CalculateScheme(Scheme scheme)
-    {
-        return "Future calculations";
-    }
+    
 }
