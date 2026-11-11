@@ -1,31 +1,72 @@
-﻿using EnergyPlannerProject.Models;
+﻿
+using EnergyPlannerProject.DTO;
+using EnergyPlannerProject.Models;
 
 namespace EnergyPlanner.Services
 {
-
     public class EnergyCalculationService
     {
-        public double CalculateRuntime(
-    IEnumerable<Accumulator> accumulators,
-    IEnumerable<Device> devices)
+        public CalculationResultDto CalculateRuntime(
+            IEnumerable<Accumulator> accumulators,
+            IEnumerable<Device> devices)
         {
-            double totalCapacity = accumulators.Sum(a =>
-                a.CapacityKilowattHours *
+            var accumulatorList = accumulators.ToList();
+            var deviceList = devices.ToList();
+
+            double availableEnergy = accumulatorList.Sum(a =>
+                a.CapacityKilowattHours * 1000 *
                 (a.EfficiencyPercent / 100));
 
-            double totalPower = devices.Sum(d =>
+            if (availableEnergy <= 0 || deviceList.Count == 0)
+                throw new ArgumentException("Invalid energy values.");
+
+            if (deviceList.Any(d =>
+                d.PowerWatts <= 0 ||
+                d.Quantity <= 0 ||
+                d.HoursPerDay <= 0 ||
+                (d.HoursPerDay > 24 && d.HoursPerDay != 1000)))
+            {
+                throw new ArgumentException("Invalid device values.");
+            }
+
+            bool continuousMode = deviceList.All(d =>
+                d.HoursPerDay == 1000);
+
+            double totalPower = deviceList.Sum(d =>
                 d.PowerWatts * d.Quantity);
 
-            if (totalCapacity <= 0)
-                throw new ArgumentException("Battery capacity must be greater than zero.");
+            if (continuousMode)
+            {
+                double runtimeHours = availableEnergy / totalPower;
 
-            if (totalPower <= 0)
-                throw new ArgumentException("Total device power must be greater than zero.");
+                return new CalculationResultDto
+                {
+                    ContinuousMode = true,
+                    RuntimeHours = runtimeHours
+                };
+            }
 
-            double availableEnergy = totalCapacity * 1000;
+            double dailyConsumption = deviceList.Sum(d =>
+                d.PowerWatts * d.Quantity *
+                (d.HoursPerDay == 1000 ? 24 : d.HoursPerDay));
 
-            return availableEnergy / totalPower;
+            if (dailyConsumption <= 0)
+                throw new ArgumentException("Daily consumption must be greater than zero.");
+
+            double runtimeDays = availableEnergy / dailyConsumption;
+
+            int fullDays = (int)Math.Floor(runtimeDays);
+            double nextDayPercent = (runtimeDays - fullDays) * 100;
+
+            return new CalculationResultDto
+            {
+                ContinuousMode = false,
+                FullDayAvailable = fullDays >= 1,
+                DailyConsumption = dailyConsumption,
+                RuntimeDays = runtimeDays,
+                AdditionalFullDays = Math.Max(0, fullDays - 1),
+                NextDayPercent = nextDayPercent
+            };
         }
     }
-
 }

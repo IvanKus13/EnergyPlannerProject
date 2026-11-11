@@ -58,13 +58,13 @@ public class SchemesController : ControllerBase
         }
 
         if (request.Devices.Any(d =>
-        string.IsNullOrWhiteSpace(d.Name) ||
-        !double.IsFinite(d.PowerWatts) ||
-        d.PowerWatts <= 0 ||
-        d.Quantity <= 0 ||
-        !double.IsFinite(d.HoursPerDay) ||
-        d.HoursPerDay <= 0 ||
-        d.HoursPerDay > 24))
+    string.IsNullOrWhiteSpace(d.Name) ||
+    !double.IsFinite(d.PowerWatts) ||
+    d.PowerWatts <= 0 ||
+    d.Quantity <= 0 ||
+    !double.IsFinite(d.HoursPerDay) ||
+    (d.HoursPerDay <= 0 ||
+     (d.HoursPerDay > 24 && d.HoursPerDay != 1000))))
         {
             return BadRequest(new { message = "Перевірте дані пристроїв." });
         }
@@ -103,23 +103,16 @@ public class SchemesController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        double runtimeHours = _calculationService.CalculateRuntime(
+        var calculationResult = _calculationService.CalculateRuntime(
             scheme.Accumulators,
             scheme.Devices
         );
-
-        double totalPower = scheme.Devices.Sum(d =>
-            d.PowerWatts * d.Quantity);
 
         return Ok(new
         {
             message = "Схему успішно збережено.",
             schemeId = scheme.Id,
-            calculationResult = new
-            {
-                runtimeHours,
-                totalPower
-            }
+            calculationResult
         });
     }
 

@@ -332,7 +332,11 @@ function createCard(type, item) {
                 "Час роботи на добу (год)",
                 item.hoursPerDay,
                 "number",
-                { placeholder: "Наприклад, 12", min: "0", max: "24" },
+                {
+                    placeholder: "Введіть 1000 для безперервної роботи",
+                    min: "0",
+                    max: "1000"
+                },
                 value => item.hoursPerDay = value
             )
         );
@@ -444,7 +448,7 @@ function validateScheme() {
             item.hoursPerDay !== "" &&
             Number.isFinite(hours) &&
             hours > 0 &&
-            hours <= 24;
+            (hours <= 24 || hours === 1000);
     });
 
     if (!allBatteriesFilled || !allDevicesFilled) {
@@ -489,10 +493,14 @@ function createSavedSchemeCard(scheme) {
     (scheme.devices || []).forEach(device => {
         const item = document.createElement("li");
 
+        const workingTime = device.hoursPerDay === 1000
+            ? "Безперервно"
+            : `${device.hoursPerDay} год/добу`;
+
         item.textContent =
             `${device.name} — ${device.powerWatts} Вт, ` +
             `Кількість: ${device.quantity ?? "—"}, ` +
-            `Час роботи: ${device.hoursPerDay ?? "—"} год/добу`;
+            `Час роботи: ${workingTime}`;
 
         deviceListElement.append(item);
     });
@@ -559,20 +567,36 @@ function displayCalculationResult(result) {
         return;
     }
 
-    const runtimeHours = Number(result.runtimeHours);
-    const totalPower = Number(result.totalPower);
+    if (result.continuousMode) {
+        const totalMinutes = Math.floor(result.runtimeHours * 60);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
 
-    if (!Number.isFinite(runtimeHours) || !Number.isFinite(totalPower)) {
-        throw new Error("Сервер повернув некоректні результати розрахунку.");
+        calculationResult.textContent =
+            `При безперервній роботі всіх пристроїв акумуляторів вистачить на ${hours} год ${minutes} хв.`;
+    } else if (!result.fullDayAvailable) {
+        calculationResult.textContent =
+            `Акумуляторів не вистачить на повний добовий графік. ` +
+            `Вони зможуть забезпечити приблизно ${(result.runtimeDays * 100).toFixed(1)}% одного добового графіка.`;
+    } else {
+        let message =
+            `Схема успішно забезпечить заданий режим протягом першої доби. `;
+
+        if (result.additionalFullDays > 0) {
+            message +=
+                `Після цього акумуляторів вистачить ще на ${result.additionalFullDays} повних днів. `;
+        }
+
+        if (result.nextDayPercent > 0.01) {
+            message +=
+                `Після цього залишиться енергії ще на ${result.nextDayPercent.toFixed(1)}% наступного добового графіка.`;
+        } else {
+            message +=
+                `Після цього акумулятори будуть розряджені.`;
+        }
+
+        calculationResult.textContent = message;
     }
-
-    const totalMinutes = Math.round(runtimeHours * 60);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-
-    calculationResult.textContent =
-        `Орієнтовний час роботи: ${hours} год ${minutes} хв. ` +
-        `Загальна потужність: ${totalPower} Вт.`;
 
     calculationsSection.hidden = false;
 }
@@ -628,7 +652,9 @@ if (saveAndCalculateButton) {
             }
 
             if (!result.calculationResult) {
-                throw new Error("Схему збережено, але сервер не повернув результат розрахунку.");
+                throw new Error(
+                    "Схему збережено, але сервер не повернув результат розрахунку."
+                );
             }
 
             displayCalculationResult(result.calculationResult);
