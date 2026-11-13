@@ -30,6 +30,11 @@ const historySchemesList = document.getElementById("history-schemes-list");
 const calculationsSection = document.getElementById("calculations-section");
 const calculationResult = document.getElementById("calculation-result");
 
+const targetDaysInput = document.getElementById("target-days");
+const recommendationEfficiencyInput = document.getElementById("recommendation-efficiency");
+const recommendCapacityButton = document.getElementById("recommend-capacity");
+const recommendationResult = document.getElementById("recommendation-result");
+
 let batteries = JSON.parse(localStorage.getItem("planner-batteries") || "[]");
 let devices = JSON.parse(localStorage.getItem("planner-devices") || "[]");
 
@@ -676,6 +681,62 @@ if (saveAndCalculateButton) {
             saveAndCalculateButton.disabled = false;
         }
     });
+}
+
+function isDeviceFilled(item) {
+    const power = Number(item.powerWatts);
+    const quantity = Number(item.quantity);
+    const hours = Number(item.hoursPerDay);
+
+    return item.name.trim() !== "" &&
+        item.powerWatts !== "" &&
+        Number.isFinite(power) &&
+        power > 0 &&
+        Number.isInteger(quantity) &&
+        quantity > 0 &&
+        item.hoursPerDay !== "" &&
+        Number.isFinite(hours) &&
+        hours > 0 &&
+        (hours <= 24 || hours === 1000);
+}
+
+function isBatteryFilled(item) {
+    const capacity = Number(item.capacityKilowattHours);
+    const efficiency = Number(item.efficiencyPercent);
+
+    return item.name.trim() !== "" &&
+        item.capacityKilowattHours !== "" &&
+        Number.isFinite(capacity) &&
+        capacity > 0 &&
+        item.efficiencyPercent !== "" &&
+        Number.isFinite(efficiency) &&
+        efficiency > 0 &&
+        efficiency <= 100;
+}
+
+function formatKilowattHours(wattHours) {
+    return (wattHours / 1000).toFixed(2);
+}
+
+function displayRecommendation(result, hasAccumulators) {
+    let message =
+        `Добове споживання пристроїв: ${formatKilowattHours(result.dailyConsumption)} кВт·год. ` +
+        `Щоб пристрої працювали ${result.targetDays} діб, потрібно ${formatKilowattHours(result.requiredEnergy)} кВт·год енергії. ` +
+        `Це акумулятори загальною ємністю щонайменше ${result.requiredCapacityKilowattHours.toFixed(2)} кВт·год ` +
+        `(при КПД ${result.efficiencyPercent}%).`;
+
+    if (hasAccumulators) {
+        if (result.isCurrentCapacityEnough) {
+            message +=
+                ` Додані акумулятори дають ${formatKilowattHours(result.currentAvailableEnergy)} кВт·год — цього вже достатньо.`;
+        } else {
+            message +=
+                ` Додані акумулятори дають лише ${formatKilowattHours(result.currentAvailableEnergy)} кВт·год. ` +
+                `Потрібно додати ще щонайменше ${result.additionalCapacityKilowattHours.toFixed(2)} кВт·год ємності.`;
+        }
+    }
+
+    recommendationResult.textContent = message;
 }
 
 renderCards();
