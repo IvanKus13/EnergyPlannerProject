@@ -24,13 +24,13 @@ namespace EnergyPlanner.Services
                 d.PowerWatts <= 0 ||
                 d.Quantity <= 0 ||
                 d.HoursPerDay <= 0 ||
-                (d.HoursPerDay > 24 && d.HoursPerDay != 1000)))
+                (d.HoursPerDay > 24 && d.HoursPerDay != SchemeInputValidator.ContinuousHoursMarker)))
             {
                 throw new ArgumentException("Invalid device values.");
             }
 
             bool continuousMode = deviceList.All(d =>
-                d.HoursPerDay == 1000);
+                d.HoursPerDay == SchemeInputValidator.ContinuousHoursMarker);
 
             double totalPower = deviceList.Sum(d =>
                 d.PowerWatts * d.Quantity);
@@ -48,7 +48,7 @@ namespace EnergyPlanner.Services
 
             double dailyConsumption = deviceList.Sum(d =>
                 d.PowerWatts * d.Quantity *
-                (d.HoursPerDay == 1000 ? 24 : d.HoursPerDay));
+                (d.HoursPerDay == SchemeInputValidator.ContinuousHoursMarker ? 24 : d.HoursPerDay));
 
             if (dailyConsumption <= 0)
                 throw new ArgumentException("Daily consumption must be greater than zero.");
