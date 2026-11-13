@@ -13,9 +13,7 @@ namespace EnergyPlanner.Services
             var accumulatorList = accumulators.ToList();
             var deviceList = devices.ToList();
 
-            double availableEnergy = accumulatorList.Sum(a =>
-                a.CapacityKilowattHours * 1000 *
-                (a.EfficiencyPercent / 100));
+            double availableEnergy = CalculateAvailableEnergy(accumulatorList);
 
             if (availableEnergy <= 0 || deviceList.Count == 0)
                 throw new ArgumentException("Invalid energy values.");
@@ -46,9 +44,7 @@ namespace EnergyPlanner.Services
                 };
             }
 
-            double dailyConsumption = deviceList.Sum(d =>
-                d.PowerWatts * d.Quantity *
-                (d.HoursPerDay == SchemeInputValidator.ContinuousHoursMarker ? 24 : d.HoursPerDay));
+            double dailyConsumption = CalculateDailyConsumption(deviceList);
 
             if (dailyConsumption <= 0)
                 throw new ArgumentException("Daily consumption must be greater than zero.");
@@ -67,6 +63,34 @@ namespace EnergyPlanner.Services
                 AdditionalFullDays = Math.Max(0, fullDays - 1),
                 NextDayPercent = nextDayPercent
             };
+        }
+
+        private static double CalculateAvailableEnergy(IEnumerable<Accumulator> accumulators)
+        {
+            double total = 0;
+
+            foreach (var accumulator in accumulators)
+            {
+                total += accumulator.CapacityKilowattHours * 1000 * (accumulator.EfficiencyPercent / 100);
+            }
+
+            return total;
+        }
+
+        private static double CalculateDailyConsumption(IEnumerable<Device> devices)
+        {
+            double total = 0;
+
+            foreach (var device in devices)
+            {
+                double hours = device.HoursPerDay == SchemeInputValidator.ContinuousHoursMarker
+                    ? 24
+                    : device.HoursPerDay;
+
+                total += device.PowerWatts * device.Quantity * hours;
+            }
+
+            return total;
         }
     }
 }
