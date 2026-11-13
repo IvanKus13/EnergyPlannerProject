@@ -65,6 +65,45 @@ namespace EnergyPlanner.Services
             };
         }
 
+        public CapacityRecommendationDto RecommendCapacity(
+            IEnumerable<Device> devices,
+            IEnumerable<Accumulator> currentAccumulators,
+            double targetDays,
+            double efficiencyPercent)
+        {
+            if (!double.IsFinite(targetDays) || targetDays <= 0)
+                throw new ArgumentException("Target days must be greater than zero.");
+
+            if (!SchemeInputValidator.IsValidEfficiency(efficiencyPercent))
+                throw new ArgumentException("Efficiency must be in range (0; 100].");
+
+            double dailyConsumption = CalculateDailyConsumption(devices);
+
+            if (dailyConsumption <= 0)
+                throw new ArgumentException("Daily consumption must be greater than zero.");
+
+            double efficiency = efficiencyPercent / 100;
+
+            double requiredEnergy = dailyConsumption * targetDays;
+            double requiredCapacity = requiredEnergy / efficiency / 1000;
+
+            double currentAvailableEnergy = CalculateAvailableEnergy(currentAccumulators);
+            double missingEnergy = Math.Max(0, requiredEnergy - currentAvailableEnergy);
+            double additionalCapacity = missingEnergy / efficiency / 1000;
+
+            return new CapacityRecommendationDto
+            {
+                TargetDays = targetDays,
+                EfficiencyPercent = efficiencyPercent,
+                DailyConsumption = dailyConsumption,
+                RequiredEnergy = requiredEnergy,
+                RequiredCapacityKilowattHours = requiredCapacity,
+                CurrentAvailableEnergy = currentAvailableEnergy,
+                AdditionalCapacityKilowattHours = additionalCapacity,
+                IsCurrentCapacityEnough = currentAvailableEnergy >= requiredEnergy
+            };
+        }
+
         private static double CalculateAvailableEnergy(IEnumerable<Accumulator> accumulators)
         {
             double total = 0;
