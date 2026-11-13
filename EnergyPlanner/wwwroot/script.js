@@ -739,5 +739,102 @@ function displayRecommendation(result, hasAccumulators) {
     recommendationResult.textContent = message;
 }
 
+if (recommendCapacityButton) {
+    recommendCapacityButton.addEventListener("click", async () => {
+        if (devices.length === 0) {
+            alert("Додайте хоча б один пристрій!");
+            return;
+        }
+
+        for (const item of devices) {
+            if (!isDeviceFilled(item)) {
+                alert("Перевірте всі поля пристроїв!");
+                return;
+            }
+        }
+
+        for (const item of batteries) {
+            if (!isBatteryFilled(item)) {
+                alert("Перевірте поля акумуляторів або видаліть незаповнені!");
+                return;
+            }
+        }
+
+        const targetDays = Number(targetDaysInput.value);
+        const efficiencyPercent = Number(recommendationEfficiencyInput.value);
+
+        if (!Number.isFinite(targetDays) || targetDays <= 0 || targetDays > 365) {
+            alert("Бажана автономність має бути більше 0 і не більше 365 діб!");
+            targetDaysInput.focus();
+            return;
+        }
+
+        if (!Number.isFinite(efficiencyPercent) || efficiencyPercent <= 0 || efficiencyPercent > 100) {
+            alert("КПД має бути в межах від 0 до 100%!");
+            recommendationEfficiencyInput.focus();
+            return;
+        }
+
+        const request = {
+            targetDays: targetDays,
+            efficiencyPercent: efficiencyPercent,
+            devices: [],
+            accumulators: []
+        };
+
+        for (const item of devices) {
+            request.devices.push({
+                name: item.name.trim(),
+                powerWatts: Number(item.powerWatts),
+                quantity: Number(item.quantity),
+                hoursPerDay: Number(item.hoursPerDay)
+            });
+        }
+
+        for (const item of batteries) {
+            request.accumulators.push({
+                name: item.name.trim(),
+                capacityKilowattHours: Number(item.capacityKilowattHours),
+                efficiencyPercent: Number(item.efficiencyPercent)
+            });
+        }
+
+        recommendCapacityButton.disabled = true;
+
+        try {
+            const response = await fetch("/api/calculations/capacity-recommendation", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(request)
+            });
+
+            const responseText = await response.text();
+
+            let result = {};
+
+            try {
+                result = responseText ? JSON.parse(responseText) : {};
+            } catch {
+                result = { message: responseText };
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    result.message || "Не вдалося розрахувати потрібну ємність."
+                );
+            }
+
+            displayRecommendation(result, request.accumulators.length > 0);
+        } catch (error) {
+            console.error("Помилка розрахунку ємності:", error);
+            alert(error.message);
+        } finally {
+            recommendCapacityButton.disabled = false;
+        }
+    });
+}
+
 renderCards();
 checkSession();
