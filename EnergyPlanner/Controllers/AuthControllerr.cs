@@ -11,6 +11,7 @@ namespace EnergyPlanner.Controllers;
 public class AuthController : ControllerBase
 {
     private const string InvalidCredentialsMessage = "Неправильна пошта або пароль";
+    private const string DuplicateEmailMessage = "Користувач з такою поштою вже існує";
 
     private readonly AppDbContext _context;
     private readonly PasswordService _passwordService;
@@ -38,13 +39,26 @@ public class AuthController : ControllerBase
             return BadRequest(error);
 
         if (await _context.Users.AnyAsync(u => u.Email == email))
-            return BadRequest("Користувач з такою поштою вже існує");
+            return BadRequest(DuplicateEmailMessage);
 
         var user = new User { Email = email };
         user.PasswordHash = _passwordService.HashPassword(user, request.Password);
 
         _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _context.Entry(user).State = EntityState.Detached;
+
+            if (await _context.Users.AnyAsync(u => u.Email == email))
+                return BadRequest(DuplicateEmailMessage);
+
+            throw;
+        }
 
         return Ok("Користувача зареєстровано.");
     }
