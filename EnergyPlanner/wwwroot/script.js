@@ -517,6 +517,44 @@ function createSavedSchemeCard(scheme) {
     return card;
 }
 
+async function deleteScheme(scheme) {
+    const confirmed = confirm(`Видалити схему «${scheme.name}»? Цю дію не можна скасувати.`);
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/schemes/${scheme.id}`, {
+            method: "DELETE"
+        });
+
+        if (response.status === 401) {
+            hideAccount();
+            return;
+        }
+
+        if (!response.ok && response.status !== 404) {
+            const responseText = await response.text();
+
+            let result = {};
+
+            try {
+                result = responseText ? JSON.parse(responseText) : {};
+            } catch {
+                result = { message: responseText };
+            }
+
+            throw new Error(result.message || "Не вдалося видалити схему.");
+        }
+
+        await loadSchemes();
+    } catch (error) {
+        console.error("Помилка видалення схеми:", error);
+        alert(error.message);
+    }
+}
+
 function renderSavedSchemes(schemes) {
     if (!historySchemesList) {
         return;
