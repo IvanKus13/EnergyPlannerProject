@@ -269,6 +269,17 @@ form button {
         overflow-wrap: anywhere;
     }
 
+    .saved-scheme-card .delete-scheme-button {
+        margin-top: 12px;
+        color: #c62828;
+        border-color: #c62828;
+    }
+
+        .saved-scheme-card .delete-scheme-button:hover {
+            background: #c62828;
+            color: white;
+        }
+
 .scheme-date {
     color: #777;
     font-size: 13px;
