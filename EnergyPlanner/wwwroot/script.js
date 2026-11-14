@@ -505,13 +505,25 @@ function createSavedSchemeCard(scheme) {
         deviceListElement.append(item);
     });
 
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "delete-scheme-button";
+    deleteButton.textContent = "Видалити схему";
+
+    deleteButton.addEventListener("click", async function () {
+        deleteButton.disabled = true;
+        await deleteScheme(scheme);
+        deleteButton.disabled = false;
+    });
+
     card.append(
         title,
         date,
         accumulatorTitle,
         accumulatorList,
         deviceTitle,
-        deviceListElement
+        deviceListElement,
+        deleteButton
     );
 
     return card;
