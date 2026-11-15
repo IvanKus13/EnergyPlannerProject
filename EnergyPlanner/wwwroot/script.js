@@ -30,6 +30,11 @@ const historySchemesList = document.getElementById("history-schemes-list");
 const calculationsSection = document.getElementById("calculations-section");
 const calculationResult = document.getElementById("calculation-result");
 
+const targetDaysInput = document.getElementById("target-days");
+const recommendationEfficiencyInput = document.getElementById("recommendation-efficiency");
+const recommendCapacityButton = document.getElementById("recommend-capacity");
+const recommendationResult = document.getElementById("recommendation-result");
+
 let batteries = JSON.parse(localStorage.getItem("planner-batteries") || "[]");
 let devices = JSON.parse(localStorage.getItem("planner-devices") || "[]");
 
@@ -724,6 +729,159 @@ if (saveAndCalculateButton) {
             alert(error.message);
         } finally {
             saveAndCalculateButton.disabled = false;
+        }
+    });
+}
+
+function isDeviceFilled(item) {
+    const power = Number(item.powerWatts);
+    const quantity = Number(item.quantity);
+    const hours = Number(item.hoursPerDay);
+
+    return item.name.trim() !== "" &&
+        item.powerWatts !== "" &&
+        Number.isFinite(power) &&
+        power > 0 &&
+        Number.isInteger(quantity) &&
+        quantity > 0 &&
+        item.hoursPerDay !== "" &&
+        Number.isFinite(hours) &&
+        hours > 0 &&
+        (hours <= 24 || hours === 1000);
+}
+
+function isBatteryFilled(item) {
+    const capacity = Number(item.capacityKilowattHours);
+    const efficiency = Number(item.efficiencyPercent);
+
+    return item.name.trim() !== "" &&
+        item.capacityKilowattHours !== "" &&
+        Number.isFinite(capacity) &&
+        capacity > 0 &&
+        item.efficiencyPercent !== "" &&
+        Number.isFinite(efficiency) &&
+        efficiency > 0 &&
+        efficiency <= 100;
+}
+
+function formatKilowattHours(wattHours) {
+    return (wattHours / 1000).toFixed(2);
+}
+
+function displayRecommendation(result, hasAccumulators) {
+    let message =
+        `Добове споживання пристроїв: ${formatKilowattHours(result.dailyConsumption)} кВт·год. ` +
+        `Щоб пристрої працювали ${result.targetDays} діб, потрібно ${formatKilowattHours(result.requiredEnergy)} кВт·год енергії. ` +
+        `Це акумулятори загальною ємністю щонайменше ${result.requiredCapacityKilowattHours.toFixed(2)} кВт·год ` +
+        `(при КПД ${result.efficiencyPercent}%).`;
+
+    if (hasAccumulators) {
+        if (result.isCurrentCapacityEnough) {
+            message +=
+                ` Додані акумулятори дають ${formatKilowattHours(result.currentAvailableEnergy)} кВт·год — цього вже достатньо.`;
+        } else {
+            message +=
+                ` Додані акумулятори дають лише ${formatKilowattHours(result.currentAvailableEnergy)} кВт·год. ` +
+                `Потрібно додати ще щонайменше ${result.additionalCapacityKilowattHours.toFixed(2)} кВт·год ємності.`;
+        }
+    }
+
+    recommendationResult.textContent = message;
+}
+
+if (recommendCapacityButton) {
+    recommendCapacityButton.addEventListener("click", async () => {
+        if (devices.length === 0) {
+            alert("Додайте хоча б один пристрій!");
+            return;
+        }
+
+        for (const item of devices) {
+            if (!isDeviceFilled(item)) {
+                alert("Перевірте всі поля пристроїв!");
+                return;
+            }
+        }
+
+        for (const item of batteries) {
+            if (!isBatteryFilled(item)) {
+                alert("Перевірте поля акумуляторів або видаліть незаповнені!");
+                return;
+            }
+        }
+
+        const targetDays = Number(targetDaysInput.value);
+        const efficiencyPercent = Number(recommendationEfficiencyInput.value);
+
+        if (!Number.isFinite(targetDays) || targetDays <= 0 || targetDays > 365) {
+            alert("Бажана автономність має бути більше 0 і не більше 365 діб!");
+            targetDaysInput.focus();
+            return;
+        }
+
+        if (!Number.isFinite(efficiencyPercent) || efficiencyPercent <= 0 || efficiencyPercent > 100) {
+            alert("КПД має бути в межах від 0 до 100%!");
+            recommendationEfficiencyInput.focus();
+            return;
+        }
+
+        const request = {
+            targetDays: targetDays,
+            efficiencyPercent: efficiencyPercent,
+            devices: [],
+            accumulators: []
+        };
+
+        for (const item of devices) {
+            request.devices.push({
+                name: item.name.trim(),
+                powerWatts: Number(item.powerWatts),
+                quantity: Number(item.quantity),
+                hoursPerDay: Number(item.hoursPerDay)
+            });
+        }
+
+        for (const item of batteries) {
+            request.accumulators.push({
+                name: item.name.trim(),
+                capacityKilowattHours: Number(item.capacityKilowattHours),
+                efficiencyPercent: Number(item.efficiencyPercent)
+            });
+        }
+
+        recommendCapacityButton.disabled = true;
+
+        try {
+            const response = await fetch("/api/calculations/capacity-recommendation", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(request)
+            });
+
+            const responseText = await response.text();
+
+            let result = {};
+
+            try {
+                result = responseText ? JSON.parse(responseText) : {};
+            } catch {
+                result = { message: responseText };
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    result.message || "Не вдалося розрахувати потрібну ємність."
+                );
+            }
+
+            displayRecommendation(result, request.accumulators.length > 0);
+        } catch (error) {
+            console.error("Помилка розрахунку ємності:", error);
+            alert(error.message);
+        } finally {
+            recommendCapacityButton.disabled = false;
         }
     });
 }
