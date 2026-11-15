@@ -11,6 +11,7 @@ namespace EnergyPlanner.Controllers;
 public class AuthController : ControllerBase
 {
     private const string InvalidCredentialsMessage = "Неправильна пошта або пароль";
+    private const string DuplicateEmailMessage = "Користувач з такою поштою вже існує";
 
     private readonly AppDbContext _context;
     private readonly PasswordService _passwordService;
@@ -29,14 +30,35 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
-        if (await _context.Users.AnyAsync(u => u.Email == request.Email))
-            return BadRequest("Користувач з такою поштою вже існує");
+        var email = AuthValidator.NormalizeEmail(request.Email);
 
-        var user = new User { Email = request.Email };
+        var error = AuthValidator.ValidateEmail(email)
+            ?? AuthValidator.ValidatePassword(request.Password);
+
+        if (error != null)
+            return BadRequest(error);
+
+        if (await _context.Users.AnyAsync(u => u.Email == email))
+            return BadRequest(DuplicateEmailMessage);
+
+        var user = new User { Email = email };
         user.PasswordHash = _passwordService.HashPassword(user, request.Password);
 
         _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _context.Entry(user).State = EntityState.Detached;
+
+            if (await _context.Users.AnyAsync(u => u.Email == email))
+                return BadRequest(DuplicateEmailMessage);
+
+            throw;
+        }
 
         return Ok("Користувача зареєстровано.");
     }
@@ -44,10 +66,12 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
-        if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+        var email = AuthValidator.NormalizeEmail(request.Email);
+
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(request.Password))
             return Unauthorized(InvalidCredentialsMessage);
 
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
 
         if (user == null)
             return Unauthorized(InvalidCredentialsMessage);
