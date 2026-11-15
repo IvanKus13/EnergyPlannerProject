@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore EnergyPlanner.sln
+
+      - name: Build
+        run: dotnet build EnergyPlanner.sln --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test EnergyPlanner.sln --no-build --configuration Release --logger trx --results-directory ./TestResults
