@@ -170,5 +170,37 @@ public class SchemesController : ControllerBase
 
         return Ok(schemes);
     }
-    
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteScheme(int id)
+    {
+        var email = HttpContext.Session.GetString("UserEmail");
+
+        if (string.IsNullOrEmpty(email))
+            return Unauthorized(new { message = "Потрібно увійти в акаунт." });
+
+        var user = await (from u in _context.Users
+                          where u.Email == email
+                          select u).FirstOrDefaultAsync();
+
+        if (user == null)
+            return Unauthorized(new { message = "Користувача не знайдено." });
+
+        var scheme = await (from s in _context.Schemes
+                                .Include(nameof(Scheme.Accumulators))
+                                .Include(nameof(Scheme.Devices))
+                            where s.Id == id && s.UserId == user.Id
+                            select s).FirstOrDefaultAsync();
+
+        if (scheme == null)
+            return NotFound(new { message = "Схему не знайдено." });
+
+        _context.Accumulators.RemoveRange(scheme.Accumulators);
+        _context.Devices.RemoveRange(scheme.Devices);
+        _context.Schemes.Remove(scheme);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Схему видалено." });
+    }
 }
