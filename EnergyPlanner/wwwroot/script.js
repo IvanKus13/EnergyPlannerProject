@@ -159,10 +159,19 @@ if (registerForm) {
                 body: JSON.stringify({ email, password })
             });
 
-            const result = await response.text();
+            const responseText = await response.text();
+
+            let result = {};
+
+            try {
+                result = responseText ? JSON.parse(responseText) : {};
+            } catch {
+                result = { message: responseText };
+            }
 
             if (message) {
-                message.textContent = result;
+                message.textContent = result.message ||
+                    (response.ok ? "Користувача зареєстровано." : "Не вдалося зареєструватися.");
             }
         } catch (error) {
             if (message) {

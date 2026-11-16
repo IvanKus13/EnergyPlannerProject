@@ -36,10 +36,10 @@ public class AuthController : ControllerBase
             ?? AuthValidator.ValidatePassword(request.Password);
 
         if (error != null)
-            return BadRequest(error);
+            return BadRequest(new { message = error });
 
         if (await _context.Users.AnyAsync(u => u.Email == email))
-            return BadRequest(DuplicateEmailMessage);
+            return BadRequest(new { message = DuplicateEmailMessage });
 
         var user = new User { Email = email };
         user.PasswordHash = _passwordService.HashPassword(user, request.Password);
@@ -55,12 +55,12 @@ public class AuthController : ControllerBase
             _context.Entry(user).State = EntityState.Detached;
 
             if (await _context.Users.AnyAsync(u => u.Email == email))
-                return BadRequest(DuplicateEmailMessage);
+                return BadRequest(new { message = DuplicateEmailMessage });
 
             throw;
         }
 
-        return Ok("Користувача зареєстровано.");
+        return Ok(new { message = "Користувача зареєстровано." });
     }
 
     [HttpPost("login")]
@@ -69,17 +69,17 @@ public class AuthController : ControllerBase
         var email = AuthValidator.NormalizeEmail(request.Email);
 
         if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(request.Password))
-            return Unauthorized(InvalidCredentialsMessage);
+            return Unauthorized(new { message = InvalidCredentialsMessage });
 
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
 
         if (user == null)
-            return Unauthorized(InvalidCredentialsMessage);
+            return Unauthorized(new { message = InvalidCredentialsMessage });
 
         var result = _passwordService.VerifyPassword(user, request.Password);
 
         if (result == PasswordCheckResult.Failed)
-            return Unauthorized(InvalidCredentialsMessage);
+            return Unauthorized(new { message = InvalidCredentialsMessage });
 
         if (result == PasswordCheckResult.SuccessRehashNeeded)
         {
