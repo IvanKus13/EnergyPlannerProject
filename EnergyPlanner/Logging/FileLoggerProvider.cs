@@ -2,8 +2,9 @@
 
 public sealed class FileLoggerProvider : ILoggerProvider
 {
+    private static readonly object WriteLock = new();
+
     private readonly string _path;
-    private readonly object _writeLock = new();
 
     public FileLoggerProvider(string path)
     {
@@ -22,9 +23,21 @@ public sealed class FileLoggerProvider : ILoggerProvider
 
     internal void Write(string line)
     {
-        lock (_writeLock)
+        try
         {
-            File.AppendAllText(_path, line + Environment.NewLine);
+            lock (WriteLock)
+            {
+                using var stream = new FileStream(_path, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+                using var writer = new StreamWriter(stream);
+
+                writer.WriteLine(line);
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
         }
     }
 
