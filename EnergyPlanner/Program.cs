@@ -1,9 +1,20 @@
 using EnergyPlanner.Data;
+using EnergyPlanner.Logging;
+using EnergyPlanner.Middleware;
 using EnergyPlanner.Services;
 using EnergyPlannerProject.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
+
+var logFilePath = Path.Combine(
+    builder.Environment.ContentRootPath,
+    builder.Configuration["Logging:File:Path"] ?? "logs/energyplanner.log");
+
+builder.Logging.AddProvider(new FileLoggerProvider(logFilePath));
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -12,7 +23,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<EnergyCalculationService>();
 
-// Хешування паролів 
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddSingleton<PasswordService>();
 
@@ -23,6 +33,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession();
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
