@@ -1,5 +1,4 @@
-﻿
-using EnergyPlannerProject.DTO;
+﻿using EnergyPlannerProject.DTO;
 using EnergyPlannerProject.Models;
 
 namespace EnergyPlanner.Services
@@ -13,41 +12,29 @@ namespace EnergyPlanner.Services
             var accumulatorList = accumulators.ToList();
             var deviceList = devices.ToList();
 
+            if (accumulatorList.Count == 0)
+                throw new ArgumentException("At least one accumulator is required.");
+
+            EnsureValidAccumulators(accumulatorList);
+            EnsureValidDevices(deviceList);
+
             double availableEnergy = CalculateAvailableEnergy(accumulatorList);
-
-            if (availableEnergy <= 0 || deviceList.Count == 0)
-                throw new ArgumentException("Invalid energy values.");
-
-            if (deviceList.Any(d =>
-                d.PowerWatts <= 0 ||
-                d.Quantity <= 0 ||
-                d.HoursPerDay <= 0 ||
-                (d.HoursPerDay > 24 && d.HoursPerDay != SchemeInputValidator.ContinuousHoursMarker)))
-            {
-                throw new ArgumentException("Invalid device values.");
-            }
 
             bool continuousMode = deviceList.All(d =>
                 d.HoursPerDay == SchemeInputValidator.ContinuousHoursMarker);
 
-            double totalPower = deviceList.Sum(d =>
-                d.PowerWatts * d.Quantity);
-
             if (continuousMode)
             {
-                double runtimeHours = availableEnergy / totalPower;
+                double totalPower = deviceList.Sum(d => d.PowerWatts * d.Quantity);
 
                 return new CalculationResultDto
                 {
                     ContinuousMode = true,
-                    RuntimeHours = runtimeHours
+                    RuntimeHours = availableEnergy / totalPower
                 };
             }
 
             double dailyConsumption = CalculateDailyConsumption(deviceList);
-
-            if (dailyConsumption <= 0)
-                throw new ArgumentException("Daily consumption must be greater than zero.");
 
             double runtimeDays = availableEnergy / dailyConsumption;
 
@@ -71,23 +58,27 @@ namespace EnergyPlanner.Services
             double targetDays,
             double efficiencyPercent)
         {
+            var deviceList = devices.ToList();
+            var accumulatorList = currentAccumulators.ToList();
+
             if (!double.IsFinite(targetDays) || targetDays <= 0)
                 throw new ArgumentException("Target days must be greater than zero.");
 
             if (!SchemeInputValidator.IsValidEfficiency(efficiencyPercent))
                 throw new ArgumentException("Efficiency must be in range (0; 100].");
 
-            double dailyConsumption = CalculateDailyConsumption(devices);
+            EnsureValidDevices(deviceList);
 
-            if (dailyConsumption <= 0)
-                throw new ArgumentException("Daily consumption must be greater than zero.");
+            EnsureValidAccumulators(accumulatorList);
+
+            double dailyConsumption = CalculateDailyConsumption(deviceList);
 
             double efficiency = efficiencyPercent / 100;
 
             double requiredEnergy = dailyConsumption * targetDays;
             double requiredCapacity = requiredEnergy / efficiency / 1000;
 
-            double currentAvailableEnergy = CalculateAvailableEnergy(currentAccumulators);
+            double currentAvailableEnergy = CalculateAvailableEnergy(accumulatorList);
             double missingEnergy = Math.Max(0, requiredEnergy - currentAvailableEnergy);
             double additionalCapacity = missingEnergy / efficiency / 1000;
 
@@ -102,6 +93,27 @@ namespace EnergyPlanner.Services
                 AdditionalCapacityKilowattHours = additionalCapacity,
                 IsCurrentCapacityEnough = currentAvailableEnergy >= requiredEnergy
             };
+        }
+
+        private static void EnsureValidDevices(IReadOnlyCollection<Device> devices)
+        {
+            if (devices.Count == 0)
+                throw new ArgumentException("At least one device is required.");
+
+            if (devices.Any(d => !SchemeInputValidator.IsValidDeviceValues(
+                    d.PowerWatts, d.Quantity, d.HoursPerDay)))
+            {
+                throw new ArgumentException("Invalid device values.");
+            }
+        }
+
+        private static void EnsureValidAccumulators(IEnumerable<Accumulator> accumulators)
+        {
+            if (accumulators.Any(a => !SchemeInputValidator.IsValidAccumulatorValues(
+                    a.CapacityKilowattHours, a.EfficiencyPercent)))
+            {
+                throw new ArgumentException("Invalid accumulator values.");
+            }
         }
 
         private static double CalculateAvailableEnergy(IEnumerable<Accumulator> accumulators)
