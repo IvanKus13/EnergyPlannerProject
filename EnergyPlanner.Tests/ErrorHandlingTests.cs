@@ -32,15 +32,29 @@ public class ErrorHandlingTests
     }
 
     [Fact]
-    public async Task ArgumentException_Returns400_WithMessage()
+    public async Task ArgumentException_Returns500_WithoutDetails()
     {
         using var factory = new TestAppFactory();
         var client = factory.CreateClient();
 
         var response = await client.GetAsync("/api/test-errors/invalid-argument");
+        var body = await response.Content.ReadAsStringAsync();
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Equal(GlobalExceptionHandler.InvalidInputMessage, await ReadMessage(response));
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.Equal(GlobalExceptionHandler.ServerErrorMessage, await ReadMessage(response));
+        Assert.DoesNotContain(ThrowingTestController.SecretDetail, body);
+    }
+
+    [Fact]
+    public async Task ArgumentNullException_Returns500()
+    {
+        using var factory = new TestAppFactory();
+        var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/api/test-errors/null-argument");
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.Equal(GlobalExceptionHandler.ServerErrorMessage, await ReadMessage(response));
     }
 
     [Fact]
