@@ -19,4 +19,10 @@ public class ThrowingTestController : ControllerBase
     {
         throw new ArgumentException(SecretDetail);
     }
+
+    [HttpGet("null-argument")]
+    public IActionResult NullArgument()
+    {
+        throw new ArgumentNullException(SecretDetail);
+    }
 }
