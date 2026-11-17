@@ -8,7 +8,7 @@ namespace EnergyPlanner.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public partial class AuthController : ControllerBase
 {
     private const string InvalidCredentialsMessage = "Неправильна пошта або пароль";
     private const string DuplicateEmailMessage = "Користувач з такою поштою вже існує";
@@ -86,7 +86,7 @@ public class AuthController : ControllerBase
             user.PasswordHash = _passwordService.HashPassword(user, request.Password);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Пароль користувача {UserId} переведено на хеш.", user.Id);
+            LogPasswordRehashed(_logger, user.Id);
         }
 
         HttpContext.Session.SetString("UserEmail", user.Email);
@@ -111,6 +111,9 @@ public class AuthController : ControllerBase
         HttpContext.Session.Clear();
         return Ok();
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Пароль користувача {UserId} переведено на хеш.")]
+    private static partial void LogPasswordRehashed(ILogger logger, int userId);
 
     public class RegisterRequest
     {
