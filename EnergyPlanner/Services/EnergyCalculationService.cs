@@ -95,7 +95,7 @@ namespace EnergyPlanner.Services
             };
         }
 
-        private static void EnsureValidDevices(IReadOnlyCollection<Device> devices)
+        private static void EnsureValidDevices(List<Device> devices)
         {
             if (devices.Count == 0)
                 throw new ArgumentException("At least one device is required.");
