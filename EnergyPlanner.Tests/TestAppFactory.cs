@@ -32,6 +32,9 @@ public class TestAppFactory : WebApplicationFactory<SchemesController>
 
             services.AddDbContext<AppDbContext>(options =>
                 options.UseInMemoryDatabase(_databaseName));
+
+            services.AddControllers()
+                .AddApplicationPart(typeof(TestAppFactory).Assembly);
         });
     }
 
