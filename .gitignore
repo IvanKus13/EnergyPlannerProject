@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 # Docker / secrets
 .env
+
+# Static analysis reports (generated)
+reports/

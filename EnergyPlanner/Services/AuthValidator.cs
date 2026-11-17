@@ -36,7 +36,7 @@ public static class AuthValidator
 
         var domain = address.Host;
 
-        if (!domain.Contains('.') || domain.StartsWith('.') || domain.EndsWith('.'))
+        if (!domain.Contains('.', StringComparison.Ordinal) || domain.StartsWith('.') || domain.EndsWith('.'))
             return "Некоректна адреса електронної пошти.";
 
         return null;

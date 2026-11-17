@@ -13,16 +13,7 @@ public static class SchemeInputValidator
         if (device == null || string.IsNullOrWhiteSpace(device.Name))
             return false;
 
-        if (!double.IsFinite(device.PowerWatts) || device.PowerWatts <= 0)
-            return false;
-
-        if (device.Quantity <= 0)
-            return false;
-
-        if (!double.IsFinite(device.HoursPerDay) || device.HoursPerDay <= 0)
-            return false;
-
-        return device.HoursPerDay <= 24 || device.HoursPerDay == ContinuousHoursMarker;
+        return IsValidDeviceValues(device.PowerWatts, device.Quantity, device.HoursPerDay);
     }
 
     public static bool IsValidAccumulator(CreateAccumulatorDto accumulator)
@@ -30,10 +21,21 @@ public static class SchemeInputValidator
         if (accumulator == null || string.IsNullOrWhiteSpace(accumulator.Name))
             return false;
 
-        if (!double.IsFinite(accumulator.CapacityKilowattHours) || accumulator.CapacityKilowattHours <= 0)
-            return false;
+        return IsValidAccumulatorValues(accumulator.CapacityKilowattHours, accumulator.EfficiencyPercent);
+    }
 
-        return IsValidEfficiency(accumulator.EfficiencyPercent);
+    public static bool IsValidDeviceValues(double powerWatts, int quantity, double hoursPerDay)
+    {
+        return double.IsFinite(powerWatts) && powerWatts > 0
+            && quantity > 0
+            && double.IsFinite(hoursPerDay) && hoursPerDay > 0
+            && (hoursPerDay <= 24 || hoursPerDay == ContinuousHoursMarker);
+    }
+
+    public static bool IsValidAccumulatorValues(double capacityKilowattHours, double efficiencyPercent)
+    {
+        return double.IsFinite(capacityKilowattHours) && capacityKilowattHours > 0
+            && IsValidEfficiency(efficiencyPercent);
     }
 
     public static bool IsValidEfficiency(double efficiencyPercent)
