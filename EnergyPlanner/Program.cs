@@ -11,7 +11,7 @@ var logFilePath = Path.Combine(
     builder.Environment.ContentRootPath,
     builder.Configuration["Logging:File:Path"] ?? "logs/energyplanner.log");
 
-builder.Logging.AddProvider(new FileLoggerProvider(logFilePath));
+builder.Logging.Services.AddSingleton<ILoggerProvider>(_ => new FileLoggerProvider(logFilePath));
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();

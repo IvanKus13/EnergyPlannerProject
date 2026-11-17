@@ -173,7 +173,7 @@ if (registerForm) {
                 message.textContent = result.message ||
                     (response.ok ? "Користувача зареєстровано." : "Не вдалося зареєструватися.");
             }
-        } catch (error) {
+        } catch {
             if (message) {
                 message.textContent = "Не вдалося підключитися до сервера.";
             }
@@ -211,7 +211,7 @@ if (loginForm) {
             } else if (loginMessage) {
                 loginMessage.textContent = "Неправильна пошта або пароль.";
             }
-        } catch (error) {
+        } catch {
             if (loginMessage) {
                 loginMessage.textContent = "Не вдалося підключитися до сервера.";
             }
