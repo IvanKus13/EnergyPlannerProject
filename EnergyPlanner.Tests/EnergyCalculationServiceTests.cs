@@ -222,4 +222,62 @@ public class EnergyCalculationServiceTests
             1,
             efficiencyPercent));
     }
+
+
+
+    [Theory]
+    [InlineData(double.NaN, 10.0)]
+    [InlineData(double.PositiveInfinity, 10.0)]
+    [InlineData(100.0, double.NaN)]
+    [InlineData(100.0, double.PositiveInfinity)]
+    public void CalculateRuntime_NonFiniteDeviceValues_Throws(double powerWatts, double hoursPerDay)
+    {
+        Assert.Throws<ArgumentException>(() => _service.CalculateRuntime(
+            new[] { Battery(5, 90) },
+            new[] { Appliance(powerWatts, hoursPerDay) }));
+    }
+
+    [Theory]
+    [InlineData(-2.0, 90.0)]                    
+    [InlineData(0.0, 90.0)]
+    [InlineData(double.NaN, 90.0)]
+    [InlineData(double.PositiveInfinity, 90.0)]
+    [InlineData(5.0, 0.0)]                      
+    [InlineData(5.0, 150.0)]                    
+    [InlineData(5.0, double.NaN)]
+    public void CalculateRuntime_InvalidAccumulatorAmongValid_Throws(
+        double capacityKilowattHours, double efficiencyPercent)
+    {
+        Assert.Throws<ArgumentException>(() => _service.CalculateRuntime(
+            new[] { Battery(5, 90), Battery(capacityKilowattHours, efficiencyPercent) },
+            new[] { Appliance(100, 10) }));
+    }
+
+    [Theory]
+    [InlineData(double.NaN, 10.0)]
+    [InlineData(double.PositiveInfinity, 10.0)]
+    [InlineData(100.0, double.NaN)]
+    [InlineData(100.0, 25.0)]
+    public void RecommendCapacity_InvalidDeviceValues_Throws(double powerWatts, double hoursPerDay)
+    {
+        Assert.Throws<ArgumentException>(() => _service.RecommendCapacity(
+            new[] { Appliance(powerWatts, hoursPerDay) },
+            Array.Empty<Accumulator>(),
+            1,
+            90));
+    }
+
+    [Theory]
+    [InlineData(-2.0, 90.0)]
+    [InlineData(double.NaN, 90.0)]
+    [InlineData(5.0, 150.0)]
+    public void RecommendCapacity_InvalidAccumulatorAmongValid_Throws(
+        double capacityKilowattHours, double efficiencyPercent)
+    {
+        Assert.Throws<ArgumentException>(() => _service.RecommendCapacity(
+            new[] { Appliance(100, 10) },
+            new[] { Battery(5, 90), Battery(capacityKilowattHours, efficiencyPercent) },
+            1,
+            90));
+    }
 }
